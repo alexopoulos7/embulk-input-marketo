@@ -423,7 +423,12 @@ public class CsvTokenizer
                     else if (isSpace(c)) {
                         // column has trailing spaces and quoted. TODO should this be rejected?
                     } else {
-                        throw new InvalidValueException(String.format("Unexpected extra character '%c' after a value quoted by '%c'", c, quote));
+                        // I do not see a reason to reject record if stray quotes happen:
+                        // ACCEPT_STRAY_QUOTES_ASSUMING_NO_DELIMITERS_IN_FIELDS	Accept stray quotes as-is in the field. Instead, it behaves undefined if delimiters are in fields. "a"b" goes a"b. "a""b" goes a"b.
+                        // https://www.embulk.org/docs/built-in.html#csv-parser-plugin
+                        // throw new InvalidValueException(String.format("Unexpected extra character '%c' after a value quoted by '%c'", c, quote));
+                        Exec.getLogger(CsvTokenizer.class).warn(String.format("Unexpected extra character '%c' after a value quoted by '%c', Record= %s", c, quote, line));
+
                     }
                     break;
 

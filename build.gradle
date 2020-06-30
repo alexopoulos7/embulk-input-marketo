@@ -82,10 +82,10 @@ task gemspec {
 Gem::Specification.new do |spec|
   spec.name          = "${project.name}"
   spec.version       = "${project.version}"
-  spec.authors       = ["uu59", "yoshihara", "taikhuu"]
+  spec.authors       = ["uu59", "yoshihara", "taikhuu", "alexopoulos"]
   spec.summary       = %[Marketo input plugin for Embulk]
   spec.description   = %[Loads records from Marketo.]
-  spec.email         = ["k@uu59.org", "h.yoshihara@everyleaf.com", "tai@treasuredata.com"]
+  spec.email         = ["k@uu59.org", "h.yoshihara@everyleaf.com", "tai@treasuredata.com", "alexopoulos7@gmail.com"]
   spec.licenses      = ["Apache2"]
   spec.homepage      = "https://github.com/treasure-data/embulk-input-marketo"
   

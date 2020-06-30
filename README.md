@@ -1,11 +1,9 @@
-[![Build Status](https://travis-ci.org/treasure-data/embulk-input-marketo.svg?branch=master)](https://travis-ci.org/treasure-data/embulk-input-marketo)
-[![Code Climate](https://codeclimate.com/github/treasure-data/embulk-input-marketo/badges/gpa.svg)](https://codeclimate.com/github/treasure-data/embulk-input-marketo)
-[![Test Coverage](https://codeclimate.com/github/treasure-data/embulk-input-marketo/badges/coverage.svg)](https://codeclimate.com/github/treasure-data/embulk-input-marketo/coverage)
-[![Gem Version](https://badge.fury.io/rb/embulk-input-marketo.svg)](http://badge.fury.io/rb/embulk-input-marketo)
+[![Gem Version](https://badge.fury.io/rb/embulk-input-marketo.svg)](http://badge.fury.io/rb/embulk-input-marketo_extended)
 
-# Marketo input plugin for Embulk
+# Marketo_extended input plugin for Embulk
 
-embulk-input-marketo is the gem preparing Embulk input plugins for [Marketo](http://www.marketo.com/).
+embulk-input-marketo_extended is the gem preparing Embulk input plugins for [Marketo](http://www.marketo.com/).
+This is a forked repo from treasure-data/embulk-input-marketo and it is mainly extended how csv parsing is done.
 
 - Lead(lead)
 - Activity log(activity)
@@ -28,7 +26,7 @@ Required Embulk version >= 0.8.33 (since 0.6.0).
 ## Install
 
 ```
-$ embulk gem install embulk-input-marketo
+$ embulk gem install embulk-input-marketo_extended
 ```
 
 ## Configuration

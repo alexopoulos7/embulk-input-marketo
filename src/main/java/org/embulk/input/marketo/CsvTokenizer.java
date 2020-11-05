@@ -210,7 +210,15 @@ public class CsvTokenizer
             }
         }
     }
+    private char peekNextNextChar() {
+        Preconditions.checkState(line != null, "peekNextNextChar is called after end of file");
 
+        if (linePos + 1 >= line.length()) {
+            return END_OF_LINE;
+        } else {
+            return line.charAt(linePos + 1);
+        }
+    }
     public boolean hasNextColumn()
     {
         return recordState == RecordState.NOT_END;
@@ -218,6 +226,7 @@ public class CsvTokenizer
 
     public String nextColumn()
     {
+        String quotesInQuotedFields = "ACCEPT_STRAY_QUOTES_ASSUMING_NO_DELIMITERS_IN_FIELDS2";
         if (!hasNextColumn()) {
             throw new TooFewColumnsException("Too few columns");
         }
@@ -370,18 +379,34 @@ public class CsvTokenizer
                     }
                     else if (isQuote(c)) {
                         char next = peekNextChar();
-                        if (isQuote(next)) { // escaped quote
+                        final char nextNext = peekNextNextChar();
+//                        Exec.getLogger(CsvTokenizer.class).info("Character is {}. Next: {}, NextNext:{}", c,next,nextNext);
+                        if (isQuote(next)
+                                && (quotesInQuotedFields != "ACCEPT_STRAY_QUOTES_ASSUMING_NO_DELIMITERS_IN_FIELDS"
+                                || (!isDelimiter(nextNext) && !isEndOfLine(nextNext)))) {
+                            // Escaped by preceding it with another quote.
+                            // A quote just before a delimiter or an end of line is recognized as a functional quote,
+                            // not just as a non-escaped stray "quote character" included the field, even if
+                            // ACCEPT_STRAY_QUOTES_ASSUMING_NO_DELIMITERS_IN_FIELDS is specified.
                             quotedValue.append(line.substring(valueStartPos, linePos));
                             valueStartPos = ++linePos;
-                        }
-                        else {
+                        } else if (quotesInQuotedFields == "ACCEPT_STRAY_QUOTES_ASSUMING_NO_DELIMITERS_IN_FIELDS"
+                                && !(isDelimiter(next) || isEndOfLine(next))) {
+                            // A non-escaped stray "quote character" in the field is processed as a regular character
+                            // if ACCEPT_STRAY_QUOTES_ASSUMING_NO_DELIMITERS_IN_FIELDS is specified,
+                            if ((linePos - valueStartPos) + quotedValue.length() > maxQuotedSizeLimit) {
+                                throw new QuotedSizeLimitExceededException("The size of the quoted value exceeds the limit size (" + maxQuotedSizeLimit + ")");
+                            }
+                        } else {
                             quotedValue.append(line.substring(valueStartPos, linePos - 1));
+//                            Exec.getLogger(CsvTokenizer.class).info("Current column state is {}. Quoted Value : {}", columnState, quotedValue);
                             columnState = ColumnState.AFTER_QUOTED_VALUE;
                         }
                     }
                     else if (isEscape(c)) {  // isQuote must be checked first in case of quote == escape
                         // In RFC 4180, CSV's escape char is '\"'. But '\\' is often used.
                         char next = peekNextChar();
+//                        Exec.getLogger(CsvTokenizer.class).info("Esc Character is {}. Next: {}, column state{}", c,next, columnState);
                         if (isEndOfLine(c)) {
                             // escape end of line. TODO assuming multi-line quoted value without newline?
                             quotedValue.append(line.substring(valueStartPos, linePos));
@@ -391,7 +416,7 @@ public class CsvTokenizer
                             }
                             valueStartPos = 0;
                         }
-                        else if (isQuote(next) || isEscape(next)) { // escaped quote
+                        else if ( isEscape(next)) { // escaped quote
                             quotedValue.append(line.substring(valueStartPos, linePos - 1));
                             quotedValue.append(next);
                             valueStartPos = ++linePos;
@@ -406,6 +431,7 @@ public class CsvTokenizer
                     break;
 
                 case AFTER_QUOTED_VALUE:
+
                     if (isDelimiter(c)) {
                         if (delimiterFollowingString == null) {
                             return quotedValue.toString();

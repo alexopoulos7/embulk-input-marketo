@@ -34,6 +34,7 @@ import org.embulk.spi.util.InputStreamFileInput;
 import org.embulk.spi.util.LineDecoder;
 import org.joda.time.DateTime;
 import org.msgpack.value.Value;
+import org.slf4j.Logger;
 
 import java.io.InputStream;
 import java.text.DateFormat;
@@ -169,6 +170,18 @@ public abstract class MarketoBaseBulkExtractInputPlugin<T extends MarketoBaseBul
                 int imported = 0;
                 while (csvRecords.hasNext()) {
                     Map<String, String> csvRecord = csvRecords.next();
+//                    if(csvRecord.containsKey("attributes")) {
+//                        System.out.println("Attributes Before");
+//                        System.out.println(csvRecord.get("attributes"));
+//
+//                        csvRecord.put("attributes", csvRecord.get("attributes").replace("\\\"\"","\\\""));
+//                        System.out.println("Attributes After");
+//                        System.out.println(csvRecord.get("attributes"));
+//                    }
+
+//                    for (Map.Entry<String, String> entry : csvRecord.entrySet()) {
+//                        System.out.println(entry.getKey() + ":" + entry.getValue().toString());
+//                    }
                     ObjectNode objectNode = MarketoUtils.OBJECT_MAPPER.valueToTree(csvRecord);
                     recordImporter.importRecord(new AllStringJacksonServiceRecord(objectNode), pageBuilder);
                     imported = imported + 1;
@@ -357,6 +370,7 @@ public abstract class MarketoBaseBulkExtractInputPlugin<T extends MarketoBaseBul
             if (hasNext()) {
                 MarketoUtils.DateRange next = dateRangeIterator.next();
                 InputStream extractedStream = getExtractedStream(marketoService, task, next.fromDate, next.toDate);
+
                 currentLineDecoder = new LineDecoder(new InputStreamFileInput(task.getBufferAllocator(), extractedStream), task);
                 return currentLineDecoder;
             }
@@ -372,6 +386,7 @@ public abstract class MarketoBaseBulkExtractInputPlugin<T extends MarketoBaseBul
 
     private class CsvRecordIterator implements Iterator<Map<String, String>>
     {
+        private  final Logger LOGGER = Exec.getLogger(CsvRecordIterator.class);
         private CsvTokenizer tokenizer;
 
         private List<String> headers;
@@ -395,6 +410,7 @@ public abstract class MarketoBaseBulkExtractInputPlugin<T extends MarketoBaseBul
         {
             if (currentCsvRecord == null) {
                 currentCsvRecord = getNextCSVRecord();
+
             }
             return currentCsvRecord != null;
         }
@@ -427,6 +443,10 @@ public abstract class MarketoBaseBulkExtractInputPlugin<T extends MarketoBaseBul
             try {
                 int i = 0;
                 while (tokenizer.hasNextColumn()) {
+                    if (i == headers.size()){
+                        LOGGER.info("We have reached last column. {}", tokenizer.nextColumnOrNull());
+                        break;
+                    }
                     kvMap.put(headers.get(i), tokenizer.nextColumnOrNull());
                     i++;
                 }

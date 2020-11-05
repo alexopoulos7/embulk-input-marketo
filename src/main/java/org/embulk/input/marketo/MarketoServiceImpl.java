@@ -11,12 +11,14 @@ import org.embulk.input.marketo.rest.RecordPagingIterable;
 import org.embulk.spi.DataException;
 import org.embulk.spi.Exec;
 import org.slf4j.Logger;
+import java.io.IOException;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import org.apache.commons.io.FileUtils;
 import java.util.Date;
 import java.util.List;
 
@@ -104,9 +106,15 @@ public class MarketoServiceImpl implements MarketoService
             }
         });
     }
+
+
     private File downloadBulkExtract(Function<BulkExtractRangeHeader, InputStream> getBulkExtractfunction)
     {
         final File tempFile = Exec.getTempFileSpace().createTempFile(DEFAULT_FILE_FORMAT);
+        LOGGER.info("Temp File = {}", tempFile.getPath());
+//        File destination = new File("/tmp/example_test.csv");
+
+
         long startByte = 0;
         int resumeTime = 0;
         while (resumeTime < MAX_RESUME_TIME) {
@@ -114,6 +122,13 @@ public class MarketoServiceImpl implements MarketoService
             InputStream bulkExtractResult = getBulkExtractfunction.apply(bulkExtractRangeHeader);
             try {
                 saveExtractedFile(bulkExtractResult, tempFile);
+//                try{
+//                    FileUtils.copyFile(tempFile, destination);
+//                }
+//                catch (IOException e){
+//                    LOGGER.error("Exception when copying to file destination {}\nException:{}",destination.getPath(),e );
+//                }
+
                 return tempFile;
             }
             catch (DownloadBulkExtractException e) {

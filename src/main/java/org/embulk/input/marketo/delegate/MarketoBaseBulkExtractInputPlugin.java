@@ -65,6 +65,10 @@ public abstract class MarketoBaseBulkExtractInputPlugin<T extends MarketoBaseBul
         @ConfigDefault("1")
         Integer getFetchDays();
 
+        @Config("landing_zone")
+        @ConfigDefault("null")
+        Optional<String> getLandingPath();
+
         @Config("latest_fetch_time")
         @ConfigDefault("null")
         Optional<Long> getLatestFetchTime();
@@ -170,9 +174,9 @@ public abstract class MarketoBaseBulkExtractInputPlugin<T extends MarketoBaseBul
                 int imported = 0;
                 while (csvRecords.hasNext()) {
                     Map<String, String> csvRecord = csvRecords.next();
-//                    if(csvRecord.containsKey("attributes")) {
-//                        System.out.println("Attributes Before");
-//                        System.out.println(csvRecord.get("attributes"));
+                    if(csvRecord.containsKey("attributes")) {
+                        System.out.println("Attributes Before");
+                        System.out.println(csvRecord.get("attributes"));
 //
 //                        csvRecord.put("attributes", csvRecord.get("attributes").replace("\\\"\"","\\\""));
 //                        System.out.println("Attributes After");
@@ -181,7 +185,7 @@ public abstract class MarketoBaseBulkExtractInputPlugin<T extends MarketoBaseBul
 
 //                    for (Map.Entry<String, String> entry : csvRecord.entrySet()) {
 //                        System.out.println(entry.getKey() + ":" + entry.getValue().toString());
-//                    }
+                    }
                     ObjectNode objectNode = MarketoUtils.OBJECT_MAPPER.valueToTree(csvRecord);
                     recordImporter.importRecord(new AllStringJacksonServiceRecord(objectNode), pageBuilder);
                     imported = imported + 1;
@@ -444,7 +448,7 @@ public abstract class MarketoBaseBulkExtractInputPlugin<T extends MarketoBaseBul
                 int i = 0;
                 while (tokenizer.hasNextColumn()) {
                     if (i == headers.size()){
-                        LOGGER.info("We have reached last column. {}", tokenizer.nextColumnOrNull());
+//                        LOGGER.info("We have reached last column. {}", tokenizer.nextColumnOrNull());
                         break;
                     }
                     kvMap.put(headers.get(i), tokenizer.nextColumnOrNull());

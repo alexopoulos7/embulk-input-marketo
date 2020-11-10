@@ -16,11 +16,13 @@ repositories {
 configurations {
     provided
 }
-version = "0.6.20"
+version = "0.6.28"
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
 
+
 dependencies {
+
     compile  "org.embulk:embulk-core:0.8.+"
     provided "org.embulk:embulk-core:0.8.+"
     compile  "org.embulk.base.restclient:embulk-base-restclient:0.5.3"

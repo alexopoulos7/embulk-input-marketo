@@ -21,6 +21,11 @@ import java.io.OutputStream;
 import org.apache.commons.io.FileUtils;
 import java.util.Date;
 import java.util.List;
+import java.time.format.DateTimeFormatter;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+
+//import com.amazonaws.services.s3.AmazonS3;
 
 /**
  * Created by tai.khuu on 9/6/17.
@@ -37,6 +42,12 @@ public class MarketoServiceImpl implements MarketoService
 
     private MarketoRestClient marketoRestClient;
 
+    private static Date startTime;
+
+    private DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+
+//    private AmazonS3 s3;
+
     public MarketoServiceImpl(MarketoRestClient marketoRestClient)
     {
         this.marketoRestClient = marketoRestClient;
@@ -45,6 +56,7 @@ public class MarketoServiceImpl implements MarketoService
     @Override
     public File extractLead(final Date startTime, Date endTime, List<String> extractedFields, String filterField, int pollingTimeIntervalSecond, final int bulkJobTimeoutSecond)
     {
+
         final String exportID = marketoRestClient.createLeadBulkExtract(startTime, endTime, extractedFields, filterField);
         marketoRestClient.startLeadBulkExtract(exportID);
         try {
@@ -85,9 +97,59 @@ public class MarketoServiceImpl implements MarketoService
         return total;
     }
 
+//    public boolean exists(String bucketName, String key) {
+//        try {
+//            fullObject = s3Client.getObject(new GetObjectRequest(bucketName, key));
+//            System.out.println("s3 object Content-Type: " + fullObject.getObjectMetadata().getContentType());
+//            return fullObject;
+//        } catch(AmazonServiceException e) {
+//            return false;
+//        }
+//        return true;
+//    }
+//    public String getBucket(String s3_key){
+//        if(s3_key.lenght()) {
+//            return s3_key.split('/')[0];
+//        }
+//    }
+//
+//    public String getKey(String s3_key){
+//        if(s3_key.lenght()) {
+//            String [] key_parts = s3_key.split('/');
+//            String key = "";
+//            for (String k: key_parts){
+//                key = key + "/" + k ;
+//            }
+//            return s3_key.split('/')[0];
+//        }
+//    }
+
     @Override
-    public File extractAllActivity(List<Integer> activityTypeIds, Date startTime, Date endTime, int pollingTimeIntervalSecond, int bulkJobTimeoutSecond)
+    public File extractAllActivity(List<Integer> activityTypeIds, Date startTime, Date endTime, int pollingTimeIntervalSecond, int bulkJobTimeoutSecond, String landingZoneFile)
     {
+        String tempFile = "/tmp/marketo_" + this.dateFormat.format(startTime) +".csv";
+        this.startTime = startTime;
+
+        try{
+            if (landingZoneFile.length()>0){
+                LOGGER.info("Let's check for temp File = {}", tempFile);
+                File f = new File(tempFile);
+                if (f.exists() && f.isFile() && f.canRead()){
+                    return f;
+                }
+//                //  Lets read and return csv file from s3
+//                s3_object =  get_s3_object(getBucket(landingZoneFile), getKey(landingZoneFile));
+//                if(s3_object){
+//                    return s3_object.getObjectContent();
+//                }
+
+            }
+        }
+        catch (Exception e){
+            System.out.println("Exception on retrieving from landing zone");
+            System.out.println("Let's continue normal execution.");
+        }
+
         final String exportID = marketoRestClient.createActivityExtract(activityTypeIds, startTime, endTime);
         marketoRestClient.startActitvityBulkExtract(exportID);
         try {
@@ -110,10 +172,8 @@ public class MarketoServiceImpl implements MarketoService
 
     private File downloadBulkExtract(Function<BulkExtractRangeHeader, InputStream> getBulkExtractfunction)
     {
-        final File tempFile = Exec.getTempFileSpace().createTempFile(DEFAULT_FILE_FORMAT);
-        LOGGER.info("Temp File = {}", tempFile.getPath());
-//        File destination = new File("/tmp/example_test.csv");
 
+        final File tempFile = Exec.getTempFileSpace().createTempFile(DEFAULT_FILE_FORMAT);
 
         long startByte = 0;
         int resumeTime = 0;
@@ -122,13 +182,17 @@ public class MarketoServiceImpl implements MarketoService
             InputStream bulkExtractResult = getBulkExtractfunction.apply(bulkExtractRangeHeader);
             try {
                 saveExtractedFile(bulkExtractResult, tempFile);
-//                try{
-//                    FileUtils.copyFile(tempFile, destination);
-//                }
-//                catch (IOException e){
-//                    LOGGER.error("Exception when copying to file destination {}\nException:{}",destination.getPath(),e );
-//                }
-
+                if (this.startTime != null){
+                    String destinationFileName = "/tmp/marketo_" + this.dateFormat.format(this.startTime) +".csv";
+                    final File destination = new File(destinationFileName);
+                    try{
+                        FileUtils.copyFile(tempFile, destination);
+                        LOGGER.info("Save activities in file: "+destinationFileName);
+                    }
+                    catch (IOException e){
+                        LOGGER.error("Exception when copying to file destination {}\nException:{}",destination.getPath(),e );
+                    }
+                }
                 return tempFile;
             }
             catch (DownloadBulkExtractException e) {

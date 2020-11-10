@@ -416,11 +416,11 @@ public class CsvTokenizer
                             }
                             valueStartPos = 0;
                         }
-                        else if ( isEscape(next)) { // escaped quote
-                            quotedValue.append(line.substring(valueStartPos, linePos - 1));
-                            quotedValue.append(next);
-                            valueStartPos = ++linePos;
-                        }
+//                        else if ( isEscape(next)) { // escaped quote
+//                            quotedValue.append(line.substring(valueStartPos, linePos - 1));
+//                            quotedValue.append(next);
+//                            valueStartPos = ++linePos;
+//                        }
                     }
                     else {
                         if ((linePos - valueStartPos) + quotedValue.length() > maxQuotedSizeLimit) {
@@ -623,7 +623,7 @@ public class CsvTokenizer
                 throw new ConfigException("\"quote\" option accepts only 1 character.");
             }
             else if (str.isEmpty()) {
-                Exec.getLogger(CsvTokenizer.class).warn("Setting '' (empty string) to \"quote\" option is obsoleted. Currently it becomes '\"' automatically but this behavior will be removed. Please set '\"' explicitly.");
+//                Exec.getLogger(CsvTokenizer.class).warn("Setting '' (empty string) to \"quote\" option is obsoleted. Currently it becomes '\"' automatically but this behavior will be removed. Please set '\"' explicitly.");
                 return new QuoteCharacter('"');
             }
             else {
@@ -684,7 +684,7 @@ public class CsvTokenizer
                 throw new ConfigException("\"escape\" option accepts only 1 character.");
             }
             else if (str.isEmpty()) {
-                Exec.getLogger(CsvTokenizer.class).warn("Setting '' (empty string) to \"escape\" option is obsoleted. Currently it becomes null automatically but this behavior will be removed. Please set \"escape: null\" explicitly.");
+//                Exec.getLogger(CsvTokenizer.class).warn("Setting '' (empty string) to \"escape\" option is obsoleted. Currently it becomes null automatically but this behavior will be removed. Please set \"escape: null\" explicitly.");
                 return noEscape();
             }
             else {
